@@ -1,6 +1,6 @@
 # Drives Windows
 
-A Flutter plugin get drives and network shortcuts for Windows
+A Flutter plugin get drives and network shortcuts on Windows.
 
 ## How to use
 
@@ -13,5 +13,3 @@ final drives = await drivesWindows.getDrives();
 final networkShortcuts = await drivesWindows.getNetworkShortcuts();
 
 ```
-
-
