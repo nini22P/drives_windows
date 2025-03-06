@@ -54,7 +54,6 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('Drives Windows example app')),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
