@@ -1,90 +1,84 @@
-import 'dart:convert';
-import 'dart:developer';
-import 'dart:io';
+import 'dart:ffi';
 import 'package:drives_windows/drives_windows.dart';
-import 'package:flutter/foundation.dart';
+import 'package:ffi/ffi.dart';
+import 'package:win32/win32.dart';
 
 class Drives {
-  static Future<List<Drive>> getDrives() async {
-    ProcessResult result = await Process.run('powershell', [
-      '-NoProfile',
-      '-NoLogo',
-      '-NonInteractive',
-      '-Command',
-      '[System.IO.DriveInfo]::GetDrives() | ConvertTo-Json',
-    ]);
+  static List<Drive> getDrives() {
+    List<Drive> drives = [];
+    int bitmask = GetLogicalDrives() & 0xFFFFFFFF;
 
-    if (result.exitCode != 0) {
-      if (kDebugMode) {
-        log('Error: ${result.stderr}');
+    for (int i = 0; i < 26; i++) {
+      if (bitmask & (1 << i) != 0) {
+        String driveLetter = String.fromCharCode('A'.codeUnitAt(0) + i);
+        String rootPath = '$driveLetter:\\';
+        final lpRootName = rootPath.toNativeUtf16();
+
+        int driveType = GetDriveType(lpRootName);
+
+        final lpVolumeName = wsalloc(MAX_PATH + 1);
+        final lpFileSystemName = wsalloc(MAX_PATH + 1);
+
+        if (GetVolumeInformation(
+              lpRootName,
+              lpVolumeName,
+              MAX_PATH + 1,
+              nullptr,
+              nullptr,
+              nullptr,
+              lpFileSystemName,
+              MAX_PATH + 1,
+            ) !=
+            NULL) {
+          String volumeName = lpVolumeName.toDartString();
+          String fileSystemName = lpFileSystemName.toDartString();
+
+          final lpFreeBytesAvailable = calloc<Uint64>();
+          final lpTotalBytes = calloc<Uint64>();
+          final lpTotalFreeBytes = calloc<Uint64>();
+
+          if (GetDiskFreeSpaceEx(
+                lpRootName,
+                lpFreeBytesAvailable,
+                lpTotalBytes,
+                lpTotalFreeBytes,
+              ) !=
+              NULL) {
+            int freeBytesAvailable = lpFreeBytesAvailable.value;
+            int totalBytes = lpTotalBytes.value;
+            int usedBytes = totalBytes - freeBytesAvailable;
+
+            double totalGB = totalBytes / (1024 * 1024 * 1024);
+            double usedGB = usedBytes / (1024 * 1024 * 1024);
+            double freeGB = freeBytesAvailable / (1024 * 1024 * 1024);
+
+            DriveType type = DriveType.fromValue(driveType);
+
+            drives.add(
+              Drive(
+                name: '$driveLetter:',
+                type: type,
+                format: fileSystemName,
+                total: double.parse(totalGB.toStringAsFixed(2)),
+                used: double.parse(usedGB.toStringAsFixed(2)),
+                free: double.parse(freeGB.toStringAsFixed(2)),
+                root: rootPath,
+                volumeLabel: volumeName.isEmpty ? null : volumeName,
+              ),
+            );
+          }
+
+          free(lpFreeBytesAvailable);
+          free(lpTotalBytes);
+          free(lpTotalFreeBytes);
+        }
+
+        free(lpRootName);
+        free(lpVolumeName);
+        free(lpFileSystemName);
       }
-      return [];
     }
 
-    String output = result.stdout;
-    return _parseOutput(output);
+    return drives;
   }
-
-  static List<Drive> _parseOutput(String output) {
-    try {
-      List<Drive> drives = [];
-      List<Map<String, dynamic>> jsonList;
-
-      final json = jsonDecode(output);
-      if (json is List) {
-        jsonList = json as List<Map<String, dynamic>>;
-      } else {
-        jsonList = [json as Map<String, dynamic>];
-      }
-
-      for (Map<String, dynamic> jsonDrive in jsonList) {
-        Map<String, dynamic> driveMap = jsonDrive;
-        String name = driveMap['Name'].substring(0, 2); // "C:"
-        String root = driveMap['Name']; // "C:\\"
-        int driveTypeNum = driveMap['DriveType'];
-        DriveType driveType = DriveType.fromValue(driveTypeNum);
-        String format = driveMap['DriveFormat'];
-        bool isReady = driveMap['IsReady'];
-        int totalSize = driveMap['TotalSize'];
-        int availableFreeSpace = driveMap['AvailableFreeSpace'];
-        double used = (totalSize - availableFreeSpace).toDouble();
-        double free = availableFreeSpace.toDouble();
-
-        // Convert sizes to GB
-        double totalGB = totalSize / (1024 * 1024 * 1024);
-        double usedGB = used / (1024 * 1024 * 1024);
-        double freeGB = free / (1024 * 1024 * 1024);
-
-        // Format to two decimal places
-        double totalFormatted = _processSize(totalGB);
-        double usedFormatted = _processSize(usedGB);
-        double freeFormatted = _processSize(freeGB);
-
-        String volumeLabel = driveMap['VolumeLabel'];
-
-        drives.add(
-          Drive(
-            name: name,
-            type: driveType,
-            format: format,
-            isReady: isReady,
-            total: totalFormatted,
-            used: usedFormatted,
-            free: freeFormatted,
-            root: root,
-            volumeLabel: volumeLabel.isEmpty ? null : volumeLabel,
-          ),
-        );
-      }
-      return drives;
-    } catch (e) {
-      if (kDebugMode) {
-        log('Error parsing JSON: $e');
-      }
-      return [];
-    }
-  }
-
-  static double _processSize(double size) =>
-      double.parse(size.toStringAsFixed(2));
 }

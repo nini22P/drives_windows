@@ -32,7 +32,6 @@ class Drive {
   final String name;
   final DriveType type;
   final String format;
-  final bool isReady;
   final double total;
   final double used;
   final double free;
@@ -43,7 +42,6 @@ class Drive {
     required this.name,
     required this.type,
     required this.format,
-    required this.isReady,
     required this.total,
     required this.used,
     required this.free,
@@ -53,7 +51,7 @@ class Drive {
 
   @override
   String toString() {
-    return 'Drive{name: $name, type: $type, format: $format, isReady: $isReady, total: $total, used: $used, free: $free, root: $root, volumeLabel: $volumeLabel}';
+    return 'Drive: {name: $name, type: $type, format: $format, total: $total, used: $used, free: $free, root: $root, volumeLabel: $volumeLabel}';
   }
 }
 
@@ -65,6 +63,6 @@ class NetworkShortcut {
 
   @override
   String toString() {
-    return 'NetworkShortcut{name: $name, root: $root}';
+    return 'NetworkShortcut: {name: $name, root: $root}';
   }
 }
