@@ -1,14 +1,11 @@
-import 'package:drives_windows/drives.dart';
-import 'package:drives_windows/network_shortcuts.dart';
+import 'package:drives_windows/drives.dart' as drives;
+import 'package:drives_windows/network_shortcuts.dart' as network_shortcuts;
 
 class DrivesWindows {
-  Future<List<Drive>> getDrives() async {
-    return await Drives.getDrives();
-  }
+  List<Drive> getDrives() => drives.getDrives();
 
-  Future<List<NetworkShortcut>> getNetworkShortcuts() async {
-    return await NetworkShortcuts.getNetworkShortcuts();
-  }
+  List<NetworkShortcut> getNetworkShortcuts() =>
+      network_shortcuts.getNetworkShortcuts();
 }
 
 enum DriveType {
@@ -57,12 +54,13 @@ class Drive {
 
 class NetworkShortcut {
   final String name;
-  final String root;
+  final String? path;
+  final String? description;
 
-  NetworkShortcut({required this.name, required this.root});
+  NetworkShortcut({required this.name, this.path, this.description});
 
   @override
   String toString() {
-    return 'NetworkShortcut: {name: $name, root: $root}';
+    return 'NetworkShortcut: {name: $name, path: $path, description: $description}';
   }
 }

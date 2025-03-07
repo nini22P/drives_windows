@@ -1,6 +1,6 @@
+import 'package:drives_windows/drives.dart';
+import 'package:drives_windows/network_shortcuts.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:drives_windows/drives_windows.dart';
 
 void main() {
@@ -17,32 +17,16 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   List<Drive> _drives = [];
   List<NetworkShortcut> _networkShortcuts = [];
-  final _drivesWindowsPlugin = DrivesWindows();
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    init();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    List<Drive> drives;
-    List<NetworkShortcut> networkShortcuts;
-
-    try {
-      drives = await _drivesWindowsPlugin.getDrives();
-    } on PlatformException {
-      drives = [];
-    }
-
-    try {
-      networkShortcuts = await _drivesWindowsPlugin.getNetworkShortcuts();
-    } on PlatformException {
-      networkShortcuts = [];
-    }
-
-    if (!mounted) return;
+  void init() {
+    final drives = getDrives();
+    final networkShortcuts = getNetworkShortcuts();
 
     setState(() {
       _drives = drives;
