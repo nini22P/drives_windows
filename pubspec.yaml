@@ -1,7 +1,9 @@
 name: drives_windows
 description: "A Flutter plugin get drives and network shortcuts on Windows"
 version: 0.0.1
-homepage:
+homepage: https://github.com/nini22P/drives_windows
+repository: https://github.com/nini22P/drives_windows
+issue_tracker: https://github.com/nini22P/drives_windows/issues
 
 environment:
   sdk: ^3.7.0
