@@ -1,9 +1,12 @@
 import 'dart:ffi';
+import 'dart:io';
 import 'package:drives_windows/drives_windows.dart';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
 List<Drive> getDrives() {
+  if (!Platform.isWindows) return [];
+
   List<Drive> drives = [];
   int bitmask = GetLogicalDrives() & 0xFFFFFFFF;
 

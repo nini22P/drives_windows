@@ -8,6 +8,8 @@ import 'package:path/path.dart' as p;
 import 'package:win32/win32.dart';
 
 List<NetworkShortcut> getNetworkShortcuts() {
+  if (!Platform.isWindows) return [];
+
   String? currentUser = Platform.environment['USERNAME'];
   if (currentUser == null) {
     if (kDebugMode) {
